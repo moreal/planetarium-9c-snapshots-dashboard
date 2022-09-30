@@ -272,22 +272,6 @@ function prepareTable(info) {
                padRight('Size', cols[2]) + 'Key \n');
   content.push(new Array(cols[0] + cols[1] + cols[2] + 4).join('-') + '\n');
 
-  // add ../ at the start of the dir listing, unless we are already at root dir
-  if (prefix && prefix !== S3B_ROOT_DIR) {
-    var up = prefix.replace(/\/$/, '').replace(/"/g, '&quot;').split('/').slice(0, -1).concat('').join(
-            '/'),  // one directory up
-        item =
-            {
-              Key: up,
-              LastModified: '',
-              Size: '',
-              keyText: '../',
-              href: S3BL_IGNORE_PATH ? '?prefix=' + up : '../'
-            },
-        row = renderRow(item, cols);
-    content.push(row + '\n');
-  }
-
   jQuery.each(files, function(idx, item) {
     // strip off the prefix
     item.keyText = item.Key.replace(S3B_ROOT_DIR, '');
