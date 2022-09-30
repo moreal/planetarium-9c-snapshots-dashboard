@@ -159,17 +159,15 @@ function getS3Data(marker, html) {
 }
 
 function buildNavigation(info) {
-  var baseUrl = S3BL_IGNORE_PATH == false ? '/' : '?prefix=';
-  var root = '<a href="' + baseUrl + '">' + BUCKET_WEBSITE_URL + '</a> / ';
+  var root = BUCKET_WEBSITE_URL + '/';
   if (info.prefix) {
     var processedPathSegments = '';
     var content = $.map(info.prefix.split('/'), function(pathSegment) {
       processedPathSegments =
           processedPathSegments + encodeURIComponent(pathSegment) + '/';
-      return '<a href="' + baseUrl + processedPathSegments.replace(/"/g, '&quot;') + '">' +
-             pathSegment + '</a>';
+      return pathSegment;
     });
-    $('#navigation').html(root + content.join(' / '));
+    $('#navigation').html(root + content.join('/') + "…");
   } else {
     $('#navigation').html(root);
   }
@@ -177,7 +175,7 @@ function buildNavigation(info) {
 
 function createS3QueryUrl(marker) {
   var s3_rest_url = BUCKET_URL;
-  s3_rest_url += '?delimiter=/';
+  s3_rest_url += '?';
 
   //
   // Handling paths and prefixes:
@@ -193,14 +191,16 @@ function createS3QueryUrl(marker) {
   // buckets but also allow deploying to non-buckets
   //
 
-  var rx = '.*[?&]prefix=' + S3B_ROOT_DIR + '([^&]+)(&.*)?$';
+  var rx = '[?&]prefix=([^&]+)(&.*)?$';
   var prefix = '';
+  var searchPrefix = '';
   if (S3BL_IGNORE_PATH == false) {
     var prefix = location.pathname.replace(/^\//, S3B_ROOT_DIR);
   }
   var match = location.search.match(rx);
   if (match) {
-    prefix = S3B_ROOT_DIR + match[1];
+    searchPrefix = match[1];
+    prefix = S3B_ROOT_DIR + searchPrefix;
   } else {
     if (S3BL_IGNORE_PATH) {
       var prefix = S3B_ROOT_DIR;
@@ -208,7 +208,6 @@ function createS3QueryUrl(marker) {
   }
   if (prefix) {
     // make sure we end in /
-    var prefix = prefix.replace(/\/$/, '') + '/';
     s3_rest_url += '&prefix=' + prefix;
   }
   if (marker) {
@@ -291,7 +290,7 @@ function prepareTable(info) {
 
   jQuery.each(files, function(idx, item) {
     // strip off the prefix
-    item.keyText = item.Key.substring(prefix.length);
+    item.keyText = item.Key.replace(S3B_ROOT_DIR, '');
     if (item.Type === 'directory') {
       if (S3BL_IGNORE_PATH) {
         item.href = location.protocol + '//' + location.hostname +
